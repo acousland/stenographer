@@ -6,9 +6,10 @@ import mimetypes
 
 def main():
     st.title('Transcription')
-    uploaded_file = st.file_uploader("Choose a video or audio file", type=['mp4', 'mp3', 'wav'])
+    uploaded_files = st.file_uploader("Choose video or audio files", type=['mp4', 'mp3', 'wav'], accept_multiple_files=True)
 
-    if uploaded_file is not None:
+    for uploaded_file in uploaded_files:
+        st.write(f"File: {uploaded_file.name}")
         file_type = mimetypes.guess_type(uploaded_file.name)[0]
 
         if 'video' in file_type:
@@ -16,7 +17,9 @@ def main():
         elif 'audio' in file_type:
             st.audio(uploaded_file)
 
-        if st.button('Transcribe'):
+    if st.button('Transcribe All'):
+        progress_bar = st.progress(0)
+        for i, uploaded_file in enumerate(uploaded_files):
             # Create a temporary file
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             temp_file_name = temp_file.name
@@ -31,10 +34,13 @@ def main():
             elif 'audio' in file_type:
                 result = transcribe_audio(temp_file_name, 'base')
 
+            st.write(f"Transcription for {uploaded_file.name}: {result}")
+
             # Delete the temporary file
             os.remove(temp_file_name)
 
-            st.text_area('Transcription Result:', value=result, height=200)
+            # Update the progress bar
+            progress_bar.progress((i + 1) / len(uploaded_files))
 
 if __name__ == "__main__":
     main()
