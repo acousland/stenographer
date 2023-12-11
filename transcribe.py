@@ -24,3 +24,13 @@ def transcribe(video_path, model):
     os.remove(temp_file_name)
 
     return result["text"]
+
+
+def transcribe_audio(audio, model):
+    # Load the model
+    model = whisper.load_model(model)
+
+    # Transcribe the audio
+    result = model.transcribe(audio)
+
+    return result["text"]
