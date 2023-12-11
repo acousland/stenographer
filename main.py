@@ -1,40 +1,45 @@
-import streamlit as st
+import tkinter as tk
+from tkinter import filedialog
 from transcribe import transcribe, transcribe_audio
-import tempfile
-import os
+import threading
 import mimetypes
 
-def main():
-    st.title('Transcription')
-    uploaded_file = st.file_uploader("Choose a video or audio file", type=['mp4', 'mp3', 'wav'])
 
-    if uploaded_file is not None:
-        file_type = mimetypes.guess_type(uploaded_file.name)[0]
+def transcribe_file(file_path):
+    file_type = mimetypes.guess_type(file_path)[0]
+    status_label.config(text='Processing...')
+    if 'video' in file_type:
+        result = transcribe(file_path, 'base')
+    elif 'audio' in file_type:
+        result = transcribe_audio(file_path, 'base')
+    result_text.delete('1.0', tk.END)
+    result_text.insert(tk.END, result)
+    status_label.config(text='Done')
 
-        if 'video' in file_type:
-            st.video(uploaded_file)
-        elif 'audio' in file_type:
-            st.audio(uploaded_file)
+def open_file():
+    file_path = filedialog.askopenfilename(filetypes=[('Video Files', '*.mp4'), ('Audio Files', '*.mp3 *.wav')])
+    if file_path:
+        threading.Thread(target=transcribe_file, args=(file_path,)).start()
 
-        if st.button('Transcribe'):
-            # Create a temporary file
-            temp_file = tempfile.NamedTemporaryFile(delete=False)
-            temp_file_name = temp_file.name
+root = tk.Tk()
+root.title('Transcription')
+root.geometry('500x300')
 
-            # Write the uploaded file to the temporary file
-            with open(temp_file_name, 'wb') as f:
-                f.write(uploaded_file.getbuffer())
+frame = tk.Frame(root, padx=10, pady=10)
+frame.pack(fill=tk.BOTH, expand=True)
 
-            # Transcribe the file
-            if 'video' in file_type:
-                result = transcribe(temp_file_name, 'base')
-            elif 'audio' in file_type:
-                result = transcribe_audio(temp_file_name, 'base')
+frame.grid_columnconfigure(0, weight=1)  # Add this line
 
-            # Delete the temporary file
-            os.remove(temp_file_name)
+open_button = tk.Button(frame, text='Open File', command=open_file)
+open_button.grid(row=0, column=0, sticky='w')
 
-            st.text_area('Transcription Result:', value=result, height=200)
+status_label = tk.Label(frame, text='')
+status_label.grid(row=1, column=0, sticky='w')
 
-if __name__ == "__main__":
-    main()
+result_label = tk.Label(frame, text='Transcription Result:')
+result_label.grid(row=2, column=0, sticky='w')
+
+result_text = tk.Text(frame, height=10)
+result_text.grid(row=3, column=0, sticky='we')
+
+root.mainloop()
