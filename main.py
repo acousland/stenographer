@@ -4,6 +4,8 @@ import tempfile
 import os
 import mimetypes
 
+st.maxUploadSize = 1024
+
 def main():
     st.title('Transcription')
     uploaded_files = st.file_uploader("Choose video or audio files", type=['mp4', 'mp3', 'wav'], accept_multiple_files=True)
